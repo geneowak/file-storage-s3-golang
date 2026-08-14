@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/bootdotdev/learn-file-storage-s3-golang-starter/handlers"
+	"github.com/geneowak/file-storage-s3-golang/handlers"
 
 	_ "github.com/lib/pq"
 )

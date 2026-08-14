@@ -1,10 +1,11 @@
 package handlers
 
 import (
-	"encoding/base64"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/geneowak/file-storage-s3-golang/internal/auth"
 	"github.com/google/uuid"
@@ -56,12 +57,19 @@ func (cfg *ApiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	data, err := io.ReadAll(file)
+	fileName := filepath.Join(cfg.AssetsRoot, videoID.String()+".png")
+	f, err := os.Create(fileName)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Unable to read file.", err)
+		respondWithError(w, http.StatusInternalServerError, "Unable to create file.", err)
 		return
 	}
-	thumbnailUrl := fmt.Sprintf("data:%s:base64;%s", mediaType, base64.StdEncoding.EncodeToString(data))
+	defer f.Close()
+	_, err = io.Copy(f, file)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Unable to write to file.", err)
+		return
+	}
+	thumbnailUrl := fmt.Sprintf("http://localhost:%s/%s", cfg.Port, fileName)
 	video.ThumbnailURL = &thumbnailUrl
 
 	err = cfg.DB.UpdateVideo(video)

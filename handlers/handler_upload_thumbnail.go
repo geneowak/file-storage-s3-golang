@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"fmt"
 	"io"
 	"mime"
@@ -70,10 +68,7 @@ func (cfg *ApiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	key := make([]byte, 32)
-	rand.Reader.Read(key)
-	name := base64.RawURLEncoding.EncodeToString(key)
-	fileName := getAssetName(name, mediaType)
+	fileName := getAssetName(mediaType)
 	fileDiskPath := cfg.getAssertDiskPath(fileName)
 
 	f, err := os.Create(fileDiskPath)

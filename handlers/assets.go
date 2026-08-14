@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -14,9 +16,13 @@ func (cfg ApiConfig) ensureAssetsDir() error {
 	return nil
 }
 
-func getAssetName(fileName string, mediaType string) string {
+func getAssetName(mediaType string) string {
+	key := make([]byte, 32)
+	rand.Read(key)
+	name := base64.RawURLEncoding.EncodeToString(key)
+
 	ext := mediaTypeToExt(mediaType)
-	return fmt.Sprintf("%s%s", fileName, ext)
+	return fmt.Sprintf("%s%s", name, ext)
 }
 
 func (cfg ApiConfig) getAssertDiskPath(assetName string) string {

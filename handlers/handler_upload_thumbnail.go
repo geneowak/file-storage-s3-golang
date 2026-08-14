@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"mime"
@@ -59,7 +61,7 @@ func (cfg *ApiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 	}
 	mimeType, _, err := mime.ParseMediaType(mediaType)
 	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Failed to parse mime type", err)
+		respondWithError(w, http.StatusBadRequest, "Invalid Content-Type", err)
 		return
 	}
 
@@ -68,7 +70,10 @@ func (cfg *ApiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	fileName := getAssetName(videoID, mediaType)
+	key := make([]byte, 32)
+	rand.Reader.Read(key)
+	name := base64.RawURLEncoding.EncodeToString(key)
+	fileName := getAssetName(name, mediaType)
 	fileDiskPath := cfg.getAssertDiskPath(fileName)
 
 	f, err := os.Create(fileDiskPath)

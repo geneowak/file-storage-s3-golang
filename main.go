@@ -10,8 +10,9 @@ import (
 
 func main() {
 
-	srv := handlers.SetupServer()
+	cfg := handlers.InitConfig()
+	srv := handlers.SetupServer(&cfg)
 
-	log.Printf("Serving on: http://localhost:%s/app/\n", port)
+	log.Printf("Serving on: http://localhost:%s/app/\n", cfg.Port)
 	log.Fatal(srv.ListenAndServe())
 }

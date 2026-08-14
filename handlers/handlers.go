@@ -10,16 +10,16 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type apiConfig struct {
-	db               database.Client
-	jwtSecret        string
-	platform         string
-	filepathRoot     string
-	assetsRoot       string
-	s3Bucket         string
-	s3Region         string
-	s3CfDistribution string
-	port             string
+type ApiConfig struct {
+	DB               database.Client
+	JwtSecret        string
+	Platform         string
+	FilepathRoot     string
+	AssetsRoot       string
+	S3Bucket         string
+	S3Region         string
+	S3CfDistribution string
+	Port             string
 }
 
 type thumbnail struct {
@@ -29,19 +29,17 @@ type thumbnail struct {
 
 var videoThumbnails = map[uuid.UUID]thumbnail{}
 
-func SetupServer() *http.Server {
-	cfg := initialize()
-
+func SetupServer(cfg *ApiConfig) *http.Server {
 	err := cfg.ensureAssetsDir()
 	if err != nil {
 		log.Fatalf("Couldn't create assets directory: %v", err)
 	}
 
 	mux := http.NewServeMux()
-	appHandler := http.StripPrefix("/app", http.FileServer(http.Dir(cfg.filepathRoot)))
+	appHandler := http.StripPrefix("/app", http.FileServer(http.Dir(cfg.FilepathRoot)))
 	mux.Handle("/app/", appHandler)
 
-	assetsHandler := http.StripPrefix("/assets", http.FileServer(http.Dir(cfg.assetsRoot)))
+	assetsHandler := http.StripPrefix("/assets", http.FileServer(http.Dir(cfg.AssetsRoot)))
 	mux.Handle("/assets/", cacheMiddleware(assetsHandler))
 
 	mux.HandleFunc("POST /api/login", cfg.handlerLogin)
@@ -61,12 +59,12 @@ func SetupServer() *http.Server {
 	mux.HandleFunc("POST /admin/reset", cfg.handlerReset)
 
 	return &http.Server{
-		Addr:    ":" + cfg.port,
+		Addr:    ":" + cfg.Port,
 		Handler: mux,
 	}
 }
 
-func initialize() apiConfig {
+func InitConfig() ApiConfig {
 	godotenv.Load(".env")
 
 	pathToDB := os.Getenv("DB_PATH")
@@ -119,15 +117,15 @@ func initialize() apiConfig {
 		log.Fatal("PORT environment variable is not set")
 	}
 
-	return apiConfig{
-		db:               db,
-		jwtSecret:        jwtSecret,
-		platform:         platform,
-		filepathRoot:     filepathRoot,
-		assetsRoot:       assetsRoot,
-		s3Bucket:         s3Bucket,
-		s3Region:         s3Region,
-		s3CfDistribution: s3CfDistribution,
-		port:             port,
+	return ApiConfig{
+		DB:               db,
+		JwtSecret:        jwtSecret,
+		Platform:         platform,
+		FilepathRoot:     filepathRoot,
+		AssetsRoot:       assetsRoot,
+		S3Bucket:         s3Bucket,
+		S3Region:         s3Region,
+		S3CfDistribution: s3CfDistribution,
+		Port:             port,
 	}
 }

@@ -4,9 +4,9 @@ import (
 	"os"
 )
 
-func (cfg apiConfig) ensureAssetsDir() error {
-	if _, err := os.Stat(cfg.assetsRoot); os.IsNotExist(err) {
-		return os.Mkdir(cfg.assetsRoot, 0755)
+func (cfg ApiConfig) ensureAssetsDir() error {
+	if _, err := os.Stat(cfg.AssetsRoot); os.IsNotExist(err) {
+		return os.Mkdir(cfg.AssetsRoot, 0755)
 	}
 	return nil
 }

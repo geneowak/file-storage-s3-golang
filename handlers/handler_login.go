@@ -9,7 +9,7 @@ import (
 	"github.com/bootdotdev/learn-file-storage-s3-golang-starter/internal/database"
 )
 
-func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
+func (cfg *ApiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Password string `json:"password"`
 		Email    string `json:"email"`
@@ -28,7 +28,7 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := cfg.db.GetUserByEmail(params.Email)
+	user, err := cfg.DB.GetUserByEmail(params.Email)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Incorrect email or password", err)
 		return
@@ -46,7 +46,7 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 
 	accessToken, err := auth.MakeJWT(
 		user.ID,
-		cfg.jwtSecret,
+		cfg.JwtSecret,
 		time.Hour*24*30,
 	)
 	if err != nil {
@@ -60,7 +60,7 @@ func (cfg *apiConfig) handlerLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = cfg.db.CreateRefreshToken(database.CreateRefreshTokenParams{
+	_, err = cfg.DB.CreateRefreshToken(database.CreateRefreshTokenParams{
 		UserID:    user.ID,
 		Token:     refreshToken,
 		ExpiresAt: time.Now().UTC().Add(time.Hour * 24 * 60),

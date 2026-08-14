@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (cfg *apiConfig) handlerVideoMetaCreate(w http.ResponseWriter, r *http.Request) {
+func (cfg *ApiConfig) handlerVideoMetaCreate(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		database.CreateVideoParams
 	}
@@ -19,7 +19,7 @@ func (cfg *apiConfig) handlerVideoMetaCreate(w http.ResponseWriter, r *http.Requ
 		respondWithError(w, http.StatusUnauthorized, "Couldn't find JWT", err)
 		return
 	}
-	userID, err := auth.ValidateJWT(token, cfg.jwtSecret)
+	userID, err := auth.ValidateJWT(token, cfg.JwtSecret)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Couldn't validate JWT", err)
 		return
@@ -34,7 +34,7 @@ func (cfg *apiConfig) handlerVideoMetaCreate(w http.ResponseWriter, r *http.Requ
 	}
 	params.UserID = userID
 
-	video, err := cfg.db.CreateVideo(params.CreateVideoParams)
+	video, err := cfg.DB.CreateVideo(params.CreateVideoParams)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't create video", err)
 		return
@@ -43,7 +43,7 @@ func (cfg *apiConfig) handlerVideoMetaCreate(w http.ResponseWriter, r *http.Requ
 	respondWithJSON(w, http.StatusCreated, video)
 }
 
-func (cfg *apiConfig) handlerVideoMetaDelete(w http.ResponseWriter, r *http.Request) {
+func (cfg *ApiConfig) handlerVideoMetaDelete(w http.ResponseWriter, r *http.Request) {
 	videoIDString := r.PathValue("videoID")
 	videoID, err := uuid.Parse(videoIDString)
 	if err != nil {
@@ -56,13 +56,13 @@ func (cfg *apiConfig) handlerVideoMetaDelete(w http.ResponseWriter, r *http.Requ
 		respondWithError(w, http.StatusUnauthorized, "Couldn't find JWT", err)
 		return
 	}
-	userID, err := auth.ValidateJWT(token, cfg.jwtSecret)
+	userID, err := auth.ValidateJWT(token, cfg.JwtSecret)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Couldn't validate JWT", err)
 		return
 	}
 
-	video, err := cfg.db.GetVideo(videoID)
+	video, err := cfg.DB.GetVideo(videoID)
 	if err != nil {
 		respondWithError(w, http.StatusNotFound, "Couldn't get video", err)
 		return
@@ -72,7 +72,7 @@ func (cfg *apiConfig) handlerVideoMetaDelete(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	err = cfg.db.DeleteVideo(videoID)
+	err = cfg.DB.DeleteVideo(videoID)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't delete video", err)
 		return
@@ -81,7 +81,7 @@ func (cfg *apiConfig) handlerVideoMetaDelete(w http.ResponseWriter, r *http.Requ
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (cfg *apiConfig) handlerVideoGet(w http.ResponseWriter, r *http.Request) {
+func (cfg *ApiConfig) handlerVideoGet(w http.ResponseWriter, r *http.Request) {
 	videoIDString := r.PathValue("videoID")
 	videoID, err := uuid.Parse(videoIDString)
 	if err != nil {
@@ -89,7 +89,7 @@ func (cfg *apiConfig) handlerVideoGet(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	video, err := cfg.db.GetVideo(videoID)
+	video, err := cfg.DB.GetVideo(videoID)
 	if err != nil {
 		respondWithError(w, http.StatusNotFound, "Couldn't get video", err)
 		return
@@ -98,19 +98,19 @@ func (cfg *apiConfig) handlerVideoGet(w http.ResponseWriter, r *http.Request) {
 	respondWithJSON(w, http.StatusOK, video)
 }
 
-func (cfg *apiConfig) handlerVideosRetrieve(w http.ResponseWriter, r *http.Request) {
+func (cfg *ApiConfig) handlerVideosRetrieve(w http.ResponseWriter, r *http.Request) {
 	token, err := auth.GetBearerToken(r.Header)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Couldn't find JWT", err)
 		return
 	}
-	userID, err := auth.ValidateJWT(token, cfg.jwtSecret)
+	userID, err := auth.ValidateJWT(token, cfg.JwtSecret)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Couldn't validate JWT", err)
 		return
 	}
 
-	videos, err := cfg.db.GetVideos(userID)
+	videos, err := cfg.DB.GetVideos(userID)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't retrieve videos", err)
 		return

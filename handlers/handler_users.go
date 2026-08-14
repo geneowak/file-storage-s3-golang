@@ -8,7 +8,7 @@ import (
 	"github.com/bootdotdev/learn-file-storage-s3-golang-starter/internal/database"
 )
 
-func (cfg *apiConfig) handlerUsersCreate(w http.ResponseWriter, r *http.Request) {
+func (cfg *ApiConfig) handlerUsersCreate(w http.ResponseWriter, r *http.Request) {
 	type parameters struct {
 		Password string `json:"password"`
 		Email    string `json:"email"`
@@ -33,7 +33,7 @@ func (cfg *apiConfig) handlerUsersCreate(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	user, err := cfg.db.CreateUser(database.CreateUserParams{
+	user, err := cfg.DB.CreateUser(database.CreateUserParams{
 		Email:    params.Email,
 		Password: hashedPassword,
 	})

@@ -3,9 +3,9 @@ package handlers
 import (
 	"fmt"
 	"io"
+	"mime"
 	"net/http"
 	"os"
-	"path/filepath"
 
 	"github.com/geneowak/file-storage-s3-golang/internal/auth"
 	"github.com/google/uuid"
@@ -51,14 +51,27 @@ func (cfg *ApiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	defer file.Close()
+
 	mediaType := header.Header.Get("Content-Type")
 	if mediaType == "" {
 		respondWithError(w, http.StatusBadRequest, "Missing Content-Type for thumbnail", nil)
 		return
 	}
+	mimeType, _, err := mime.ParseMediaType(mediaType)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Failed to parse mime type", err)
+		return
+	}
 
-	fileName := filepath.Join(cfg.AssetsRoot, videoID.String()+".png")
-	f, err := os.Create(fileName)
+	if mimeType != "image/jpeg" && mimeType != "image/png" {
+		respondWithError(w, http.StatusBadRequest, "Invalid file type: only upload 'image/jpeg' and 'image/png'", err)
+		return
+	}
+
+	fileName := getAssetName(videoID, mediaType)
+	fileDiskPath := cfg.getAssertDiskPath(fileName)
+
+	f, err := os.Create(fileDiskPath)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Unable to create file.", err)
 		return
@@ -69,7 +82,7 @@ func (cfg *ApiConfig) handlerUploadThumbnail(w http.ResponseWriter, r *http.Requ
 		respondWithError(w, http.StatusInternalServerError, "Unable to write to file.", err)
 		return
 	}
-	thumbnailUrl := fmt.Sprintf("http://localhost:%s/%s", cfg.Port, fileName)
+	thumbnailUrl := cfg.getAssertURL(fileDiskPath)
 	video.ThumbnailURL = &thumbnailUrl
 
 	err = cfg.DB.UpdateVideo(video)

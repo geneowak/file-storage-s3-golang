@@ -1,7 +1,12 @@
 package handlers
 
 import (
+	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
+
+	"github.com/google/uuid"
 )
 
 func (cfg ApiConfig) ensureAssetsDir() error {
@@ -9,4 +14,25 @@ func (cfg ApiConfig) ensureAssetsDir() error {
 		return os.Mkdir(cfg.AssetsRoot, 0755)
 	}
 	return nil
+}
+
+func getAssetName(videoID uuid.UUID, mediaType string) string {
+	ext := mediaTypeToExt(mediaType)
+	return fmt.Sprintf("%s%s", videoID, ext)
+}
+
+func (cfg ApiConfig) getAssertDiskPath(assetName string) string {
+	return filepath.Join(cfg.AssetsRoot, assetName)
+}
+
+func (cfg ApiConfig) getAssertURL(assertName string) string {
+	return fmt.Sprintf("http://localhost:%s/%s", cfg.Port, assertName)
+}
+
+func mediaTypeToExt(mediaType string) string {
+	parts := strings.Split(mediaType, "/")
+	if len(parts) != 2 {
+		return ".bin"
+	}
+	return "." + parts[1]
 }

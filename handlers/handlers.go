@@ -1,10 +1,13 @@
 package handlers
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
 
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/geneowak/file-storage-s3-golang/internal/database"
 	"github.com/joho/godotenv"
 )
@@ -15,6 +18,7 @@ type ApiConfig struct {
 	Platform         string
 	FilepathRoot     string
 	AssetsRoot       string
+	S3Client         *s3.Client
 	S3Bucket         string
 	S3Region         string
 	S3CfDistribution string
@@ -107,6 +111,14 @@ func InitConfig() ApiConfig {
 	if port == "" {
 		log.Fatal("PORT environment variable is not set")
 	}
+	cfg, err := config.LoadDefaultConfig(
+		context.Background(),
+		config.WithRegion(s3Region),
+	)
+	if err != nil {
+		log.Fatal("Failed to load s3 config: ", err)
+	}
+	s3Client := s3.NewFromConfig(cfg)
 
 	return ApiConfig{
 		DB:               db,
@@ -114,6 +126,7 @@ func InitConfig() ApiConfig {
 		Platform:         platform,
 		FilepathRoot:     filepathRoot,
 		AssetsRoot:       assetsRoot,
+		S3Client:         s3Client,
 		S3Bucket:         s3Bucket,
 		S3Region:         s3Region,
 		S3CfDistribution: s3CfDistribution,

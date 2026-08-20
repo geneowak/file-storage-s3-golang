@@ -29,6 +29,10 @@ func (cfg ApiConfig) getAssertDiskPath(assetName string) string {
 	return filepath.Join(cfg.AssetsRoot, assetName)
 }
 
+func (cfg ApiConfig) getObjectUrl(key string) string {
+	return fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", cfg.S3Bucket, cfg.S3Region, key)
+}
+
 func (cfg ApiConfig) getAssertURL(assertName string) string {
 	return fmt.Sprintf("http://localhost:%s/%s", cfg.Port, assertName)
 }

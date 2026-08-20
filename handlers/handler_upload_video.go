@@ -101,7 +101,7 @@ func (cfg *ApiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 		respondWithError(w, http.StatusInternalServerError, "Failed to upload video", err)
 		return
 	}
-	videoUrl := fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", cfg.S3Bucket, cfg.S3Region, fileName)
+	videoUrl := cfg.getObjectUrl(fileName)
 	video.VideoURL = &videoUrl
 
 	err = cfg.DB.UpdateVideo(video)

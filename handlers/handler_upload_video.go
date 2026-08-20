@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/geneowak/file-storage-s3-golang/internal/auth"
 	"github.com/google/uuid"
 )
@@ -51,7 +52,7 @@ func (cfg *ApiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 	}
 	fmt.Println("uploading thumbnail for video", videoID, "by user", userID)
 
-	file, header, err := r.FormFile("thumbnail")
+	file, header, err := r.FormFile("video")
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "Unable to parse form file", err)
 		return
@@ -69,27 +70,39 @@ func (cfg *ApiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if mimeType != "image/jpeg" && mimeType != "image/png" {
-		respondWithError(w, http.StatusBadRequest, "Invalid file type: only upload 'image/jpeg' and 'image/png'", err)
+	if mimeType != "video/mp4" {
+		respondWithError(w, http.StatusBadRequest, "Invalid file type: only upload 'video/mp4'", err)
 		return
 	}
 
 	fileName := getAssetName(mediaType)
-	fileDiskPath := cfg.getAssertDiskPath(fileName)
 
-	f, err := os.Create(fileDiskPath)
+	f, err := os.CreateTemp("", fileName)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Unable to create file.", err)
 		return
 	}
+	defer os.Remove(f.Name())
 	defer f.Close()
+
 	_, err = io.Copy(f, file)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Unable to write to file.", err)
 		return
 	}
-	thumbnailUrl := cfg.getAssertURL(fileDiskPath)
-	video.ThumbnailURL = &thumbnailUrl
+	f.Seek(0, io.SeekStart)
+	_, err = cfg.S3Client.PutObject(r.Context(), &s3.PutObjectInput{
+		Bucket:      &cfg.S3Bucket,
+		Key:         &fileName,
+		Body:        f,
+		ContentType: &mimeType,
+	})
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Failed to upload video", err)
+		return
+	}
+	videoUrl := fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", cfg.S3Bucket, cfg.S3Region, fileName)
+	video.VideoURL = &videoUrl
 
 	err = cfg.DB.UpdateVideo(video)
 	if err != nil {

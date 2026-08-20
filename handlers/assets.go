@@ -58,23 +58,16 @@ func getVideoAspectRatio(filePath string) (string, error) {
 
 	err := cmd.Run()
 	if err != nil {
-		return "", fmt.Errorf("Error getting aspect ratio: %w\nStdErr: %s", err, stdErr.String())
+		return "", fmt.Errorf("ffprobe error: %w\nStdErr: %s", err, stdErr.String())
 	}
 	var results struct {
 		Streams []struct {
-			Index              int    `json:"index"`
-			CodecType          string `json:"codec_type"`
-			CodecTagString     string `json:"codec_tag_string"`
 			Width              int    `json:"width,omitempty"`
 			Height             int    `json:"height,omitempty"`
 			CodedWidth         int    `json:"coded_width,omitempty"`
 			CodedHeight        int    `json:"coded_height,omitempty"`
 			SampleAspectRatio  string `json:"sample_aspect_ratio,omitempty"`
 			DisplayAspectRatio string `json:"display_aspect_ratio,omitempty"`
-			PixFmt             string `json:"pix_fmt,omitempty"`
-			ID                 string `json:"id"`
-			RFrameRate         string `json:"r_frame_rate"`
-			AvgFrameRate       string `json:"avg_frame_rate"`
 		} `json:"streams"`
 	}
 

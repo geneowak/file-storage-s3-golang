@@ -6,6 +6,7 @@ import (
 	"mime"
 	"net/http"
 	"os"
+	"path"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -99,7 +100,7 @@ func (cfg *ApiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 	}
 
 	prefix := getPrefix(aspectRatio)
-	key := prefix + "/" + fileName
+	key := path.Join(prefix, fileName)
 
 	tempFile.Seek(0, io.SeekStart)
 	_, err = cfg.S3Client.PutObject(r.Context(), &s3.PutObjectInput{

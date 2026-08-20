@@ -1,10 +1,13 @@
 package handlers
 
 import (
+	"bytes"
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 )
@@ -43,4 +46,42 @@ func mediaTypeToExt(mediaType string) string {
 		return ".bin"
 	}
 	return "." + parts[1]
+}
+
+func getVideoAspectRatio(filePath string) (string, error) {
+	command := fmt.Sprintf("ffprobe -v error -print_format json -show_streams %s", filePath)
+	args := strings.Fields(command)
+	cmd := exec.Command(args[0], args[1:]...)
+	var stdOut, stdErr bytes.Buffer
+	cmd.Stdout = &stdOut
+	cmd.Stderr = &stdErr
+
+	err := cmd.Run()
+	if err != nil {
+		return "", fmt.Errorf("Error getting aspect ratio: %w\nStdErr: %s", err, stdErr.String())
+	}
+	var results struct {
+		Streams []struct {
+			Index              int    `json:"index"`
+			CodecType          string `json:"codec_type"`
+			CodecTagString     string `json:"codec_tag_string"`
+			Width              int    `json:"width,omitempty"`
+			Height             int    `json:"height,omitempty"`
+			CodedWidth         int    `json:"coded_width,omitempty"`
+			CodedHeight        int    `json:"coded_height,omitempty"`
+			SampleAspectRatio  string `json:"sample_aspect_ratio,omitempty"`
+			DisplayAspectRatio string `json:"display_aspect_ratio,omitempty"`
+			PixFmt             string `json:"pix_fmt,omitempty"`
+			ID                 string `json:"id"`
+			RFrameRate         string `json:"r_frame_rate"`
+			AvgFrameRate       string `json:"avg_frame_rate"`
+		} `json:"streams"`
+	}
+
+	err = json.Unmarshal(stdOut.Bytes(), &results)
+	if err != nil {
+		return "", err
+	}
+
+	return results.Streams[0].DisplayAspectRatio, nil
 }

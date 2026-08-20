@@ -92,10 +92,19 @@ func (cfg *ApiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	aspectRatio, err := getVideoAspectRatio(tempFile.Name())
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Unable to get video aspect ratio", err)
+		return
+	}
+
+	prefix := getPrefix(aspectRatio)
+	key := prefix + "/" + fileName
+
 	tempFile.Seek(0, io.SeekStart)
 	_, err = cfg.S3Client.PutObject(r.Context(), &s3.PutObjectInput{
 		Bucket:      aws.String(cfg.S3Bucket),
-		Key:         aws.String(fileName),
+		Key:         aws.String(key),
 		Body:        tempFile,
 		ContentType: aws.String(mimeType),
 	})
@@ -103,7 +112,7 @@ func (cfg *ApiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 		respondWithError(w, http.StatusInternalServerError, "Failed to upload video", err)
 		return
 	}
-	videoUrl := cfg.getObjectUrl(fileName)
+	videoUrl := cfg.getObjectUrl(key)
 	video.VideoURL = &videoUrl
 
 	err = cfg.DB.UpdateVideo(video)
@@ -113,4 +122,15 @@ func (cfg *ApiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 	}
 
 	respondWithJSON(w, http.StatusOK, video)
+}
+
+func getPrefix(aspectRatio string) string {
+	switch aspectRatio {
+	case "16:9":
+		return "landscape"
+	case "9:16":
+		return "portrait"
+	default:
+		return "other"
+	}
 }

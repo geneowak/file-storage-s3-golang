@@ -103,12 +103,14 @@ func (cfg *ApiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 		respondWithError(w, http.StatusInternalServerError, "Error processing file", err)
 		return
 	}
+	defer os.Remove(processedPath)
 
 	processedFile, err := os.Open(processedPath)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Error opening file", err)
+		respondWithError(w, http.StatusInternalServerError, "Error opening processed file", err)
 		return
 	}
+	defer processedFile.Close()
 
 	prefix := getPrefix(aspectRatio)
 	key := path.Join(prefix, fileName)

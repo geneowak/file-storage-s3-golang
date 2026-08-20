@@ -111,14 +111,14 @@ func InitConfig() ApiConfig {
 	if port == "" {
 		log.Fatal("PORT environment variable is not set")
 	}
-	cfg, err := config.LoadDefaultConfig(
+	awsCfg, err := config.LoadDefaultConfig(
 		context.Background(),
 		config.WithRegion(s3Region),
 	)
 	if err != nil {
 		log.Fatal("Failed to load s3 config: ", err)
 	}
-	s3Client := s3.NewFromConfig(cfg)
+	s3Client := s3.NewFromConfig(awsCfg)
 
 	return ApiConfig{
 		DB:               db,

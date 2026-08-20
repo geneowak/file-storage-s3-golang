@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/geneowak/file-storage-s3-golang/internal/auth"
 	"github.com/google/uuid"
@@ -93,10 +94,10 @@ func (cfg *ApiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 
 	tempFile.Seek(0, io.SeekStart)
 	_, err = cfg.S3Client.PutObject(r.Context(), &s3.PutObjectInput{
-		Bucket:      &cfg.S3Bucket,
-		Key:         &fileName,
+		Bucket:      aws.String(cfg.S3Bucket),
+		Key:         aws.String(fileName),
 		Body:        tempFile,
-		ContentType: &mimeType,
+		ContentType: aws.String(mimeType),
 	})
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Failed to upload video", err)

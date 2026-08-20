@@ -98,6 +98,17 @@ func (cfg *ApiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 		respondWithError(w, http.StatusInternalServerError, "Unable to get video aspect ratio", err)
 		return
 	}
+	processedPath, err := processVideoForFastStart(tempFile.Name())
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Error processing file", err)
+		return
+	}
+
+	processedFile, err := os.Open(processedPath)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Error opening file", err)
+		return
+	}
 
 	prefix := getPrefix(aspectRatio)
 	key := path.Join(prefix, fileName)
@@ -106,7 +117,7 @@ func (cfg *ApiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 	_, err = cfg.S3Client.PutObject(r.Context(), &s3.PutObjectInput{
 		Bucket:      aws.String(cfg.S3Bucket),
 		Key:         aws.String(key),
-		Body:        tempFile,
+		Body:        processedFile,
 		ContentType: aws.String(mimeType),
 	})
 	if err != nil {

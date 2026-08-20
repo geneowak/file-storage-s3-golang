@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -83,17 +82,23 @@ func getVideoAspectRatio(filePath string) (string, error) {
 func processVideoForFastStart(filePath string) (string, error) {
 	outPath := filePath + ".processing"
 	command := fmt.Sprintf("ffmpeg -i %s -c copy -movflags faststart -f mp4 %s", filePath, outPath)
-	log.Println(command)
 	args := strings.Fields(command)
 	cmd := exec.Command(args[0], args[1:]...)
 
-	var stdOut, stdErr bytes.Buffer
-	cmd.Stdout = &stdOut
+	var stdErr bytes.Buffer
 	cmd.Stderr = &stdErr
 
-	err := cmd.Run()
+	if err := cmd.Run(); err != nil {
+		return "", fmt.Errorf("error processing video: %w\nStdErr: %s", err, stdErr.String())
+	}
+
+	fileInfo, err := os.Stat(outPath)
 	if err != nil {
-		return "", fmt.Errorf("ffprobe error: %w\nStdErr: %s", err, stdErr.String())
+		return "", fmt.Errorf("couldn't get info on processed file: %w", err)
+	}
+	if fileInfo.Size() == 0 {
+
+		return "", fmt.Errorf("Processed file is empty")
 	}
 
 	return outPath, nil
